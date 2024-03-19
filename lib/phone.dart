@@ -1,18 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 class MyPhone extends StatefulWidget {
-  const MyPhone({super.key});
+  const MyPhone({Key? key}) : super(key: key);
 
   @override
   State<MyPhone> createState() => _MyPhoneState();
 }
 
 class _MyPhoneState extends State<MyPhone> {
-  TextEditingController countrycode = TextEditingController();
+  TextEditingController countryCodeController = TextEditingController();
+  TextEditingController phoneNumberController = TextEditingController();
+
+  Future<void> sendOTP(String phoneNumber) async {
+    final response = await http.post(
+      Uri.parse('https://api.springbook.in/api/sessauth/otp'),
+      body: {'phone': phoneNumber},
+    );
+
+    if (response.statusCode == 200) {
+      // Handle successful response here
+      print('OTP sent successfully');
+    } else {
+      // Handle error
+      print('Failed to send OTP');
+    }
+  }
 
   @override
   void initState() {
-    countrycode.text = "+91";
+    countryCodeController.text = "+91";
     super.initState();
   }
 
@@ -62,7 +79,7 @@ class _MyPhoneState extends State<MyPhone> {
                     SizedBox(
                       width: 48,
                       child: TextField(
-                        controller: countrycode,
+                        controller: countryCodeController,
                         decoration:
                             const InputDecoration(border: InputBorder.none),
                       ),
@@ -74,9 +91,10 @@ class _MyPhoneState extends State<MyPhone> {
                     const SizedBox(
                       width: 10,
                     ),
-                    const Expanded(
+                    Expanded(
                       child: TextField(
-                        decoration: InputDecoration(
+                        controller: phoneNumberController,
+                        decoration: const InputDecoration(
                             border: InputBorder.none, hintText: "Phone"),
                       ),
                     ),
@@ -91,6 +109,9 @@ class _MyPhoneState extends State<MyPhone> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
+                    String phoneNumber = countryCodeController.text.trim() +
+                        phoneNumberController.text.trim();
+                    sendOTP(phoneNumber);
                     Navigator.pushNamed(context, "verify");
                   },
                   style: ElevatedButton.styleFrom(
