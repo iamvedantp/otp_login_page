@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -11,19 +13,32 @@ class MyPhone extends StatefulWidget {
 class _MyPhoneState extends State<MyPhone> {
   TextEditingController countryCodeController = TextEditingController();
   TextEditingController phoneNumberController = TextEditingController();
+  String? errorMessage; // To store any error message
 
   Future<void> sendOTP(String phoneNumber) async {
-    final response = await http.post(
-      Uri.parse('https://api.springbook.in/api/sessauth/otp'),
-      body: {'phone': phoneNumber},
-    );
+    try {
+      final response = await http.post(
+        Uri.parse('https://api.springbook.in/api/sessauth/otp'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'phone': phoneNumber,
+        }),
+      );
 
-    if (response.statusCode == 200) {
-      // Handle successful response here
-      print('OTP sent successfully');
-    } else {
-      // Handle error
-      print('Failed to send OTP');
+      if (response.statusCode == 200) {
+        // Handle successful OTP request
+        errorMessage = null; // Clear any previous error
+        Navigator.pushNamed(context, 'verify');
+      } else {
+        // Handle error response
+        errorMessage = 'Error sending OTP: ${response.statusCode}';
+        setState(() {}); // Update UI to show the error message
+      }
+    } catch (error) {
+      errorMessage = 'Error: $error';
+      setState(() {});
     }
   }
 
@@ -95,7 +110,9 @@ class _MyPhoneState extends State<MyPhone> {
                       child: TextField(
                         controller: phoneNumberController,
                         decoration: const InputDecoration(
-                            border: InputBorder.none, hintText: "Phone"),
+                          border: InputBorder.none,
+                          hintText: "Phone",
+                        ),
                       ),
                     ),
                   ],
