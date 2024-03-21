@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class MyPhone extends StatefulWidget {
   const MyPhone({Key? key}) : super(key: key);
@@ -9,28 +10,38 @@ class MyPhone extends StatefulWidget {
 }
 
 class _MyPhoneState extends State<MyPhone> {
-  TextEditingController countryCodeController = TextEditingController();
-  TextEditingController phoneNumberController = TextEditingController();
+  TextEditingController userIdController = TextEditingController();
+  String? errorMessage;
 
-  Future<void> sendOTP(String phoneNumber) async {
-    final response = await http.post(
-      Uri.parse('https://api.springbook.in/api/sessauth/otp'),
-      body: {'phone': phoneNumber},
-    );
+  Future<void> sendOTP(String userId) async {
+    try {
+      // Your API call to send OTP goes here
+      // Modify the API call as per your requirements
+      // For example:
+      final response = await http.post(
+        Uri.parse('https://api.springbook.in/api/sessauth/otp'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'user_id': userId,
+        }),
+      );
 
-    if (response.statusCode == 200) {
-      // Handle successful response here
-      print('OTP sent successfully');
-    } else {
+      if (response.statusCode == 200) {
+        errorMessage = null;
+        // Navigate to the OTP verification screen
+        Navigator.pushNamed(context, 'verify');
+      } else {
+        // Handle error response
+        errorMessage = 'Error sending OTP: ${response.statusCode}';
+        setState(() {});
+      }
+    } catch (error) {
       // Handle error
-      print('Failed to send OTP');
+      errorMessage = 'Error: $error';
+      setState(() {});
     }
-  }
-
-  @override
-  void initState() {
-    countryCodeController.text = "+91";
-    super.initState();
   }
 
   @override
@@ -49,55 +60,42 @@ class _MyPhoneState extends State<MyPhone> {
                 height: 150,
               ),
               const SizedBox(
-                height: 25,
+                height: 10,
               ),
               const Text(
-                'Phone Verification',
+                'User Verification',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
               const SizedBox(
                 height: 10,
               ),
               const Text(
-                'We need to register your Phone before getting Started !',
-                style: TextStyle(fontSize: 16),
+                'Please Type Your User ID !',
+                style: TextStyle(fontSize: 18),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(
                 height: 30,
               ),
               Container(
-                height: 55,
+                height: 45,
                 decoration: BoxDecoration(
-                    border: Border.all(width: 1, color: Colors.grey),
-                    borderRadius: BorderRadius.circular(10)),
+                  border: Border.all(width: 1, color: Colors.grey),
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 child: Row(
                   children: [
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    SizedBox(
-                      width: 48,
-                      child: TextField(
-                        controller: countryCodeController,
-                        decoration:
-                            const InputDecoration(border: InputBorder.none),
-                      ),
-                    ),
-                    const Text(
-                      "|",
-                      style: TextStyle(fontSize: 33, color: Colors.grey),
-                    ),
-                    const SizedBox(
-                      width: 10,
-                    ),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: TextField(
-                        controller: phoneNumberController,
+                        controller: userIdController,
                         decoration: const InputDecoration(
-                            border: InputBorder.none, hintText: "Phone"),
+                          border: InputBorder.none,
+                          hintText: "User ID",
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 10),
                   ],
                 ),
               ),
@@ -109,21 +107,33 @@ class _MyPhoneState extends State<MyPhone> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    String phoneNumber = countryCodeController.text.trim() +
-                        phoneNumberController.text.trim();
-                    sendOTP(phoneNumber);
-                    Navigator.pushNamed(context, "verify");
+                    String userId = userIdController.text.trim();
+                    if (userId.isEmpty) {
+                      // Show error message if User ID is empty
+                      errorMessage = 'User ID cannot be empty';
+                      setState(() {});
+                    } else {
+                      // Call function to send OTP
+                      sendOTP(userId);
+                    }
                   },
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green.shade600,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10))),
+                    backgroundColor: Colors.green.shade600,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
                   child: const Text(
-                    "Send the code",
+                    "Send OTP",
                     style: TextStyle(fontSize: 16, color: Colors.white),
                   ),
                 ),
-              )
+              ),
+              if (errorMessage != null)
+                Text(
+                  errorMessage!,
+                  style: const TextStyle(color: Colors.red),
+                )
             ],
           ),
         ),
