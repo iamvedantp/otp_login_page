@@ -19,12 +19,12 @@ class _MyPhoneState extends State<MyPhone> {
       // Modify the API call as per your requirements
       // For example:
       final response = await http.post(
-        Uri.parse('https://api.springbook.in/api/sessauth/otp'),
+        Uri.parse('http://172.17.0.1:8080/api/sessauth/otp'),
         headers: {
           'Content-Type': 'application/json',
         },
         body: jsonEncode({
-          'user_id': userId,
+          'handle': userId,
         }),
       );
 
@@ -91,7 +91,7 @@ class _MyPhoneState extends State<MyPhone> {
                         controller: userIdController,
                         decoration: const InputDecoration(
                           border: InputBorder.none,
-                          hintText: "User ID",
+                          hintText: "Email/Phone",
                         ),
                       ),
                     ),

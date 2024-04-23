@@ -19,14 +19,14 @@ class _MyOtpState extends State<MyOtp> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('Error'),
-          content: Text('OTP cannot be empty'),
+          title: const Text('Error'),
+          content: const Text('OTP cannot be empty'),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('OK'),
+              child: const Text('OK'),
             ),
           ],
         ),
@@ -34,20 +34,25 @@ class _MyOtpState extends State<MyOtp> {
     } else {
       try {
         final response = await http.post(
-          Uri.parse('https://api.springbook.in/api/sessauth/login'),
+          Uri.parse('http://localhost:8080/api/sessauth/login'),
           body: {'otp': otp},
         );
 
         if (response.statusCode == 200) {
           // OTP verification successful
           print('Phone number verified successfully');
+
           // Parse response JSON
           final responseData = json.decode(response.body);
           if (responseData is Map<String, dynamic> &&
               responseData.containsKey('otp')) {
             String receivedOTP = responseData['otp'];
             print('Received OTP from backend: $receivedOTP');
-            // Navigate to the next screen
+
+            // Auto-fill OTP in the input field
+            otpController.text = receivedOTP;
+
+            // Navigate to the next screen (adjust this based on your app's navigation logic)
             Navigator.pushNamedAndRemoveUntil(
               context,
               "home",
@@ -59,14 +64,14 @@ class _MyOtpState extends State<MyOtp> {
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
-                title: Text('Error'),
-                content: Text('Invalid response format from backend'),
+                title: const Text('Error'),
+                content: const Text('Invalid response format from backend'),
                 actions: <Widget>[
                   TextButton(
                     onPressed: () {
                       Navigator.of(context).pop();
                     },
-                    child: Text('OK'),
+                    child: const Text('OK'),
                   ),
                 ],
               ),
@@ -79,14 +84,14 @@ class _MyOtpState extends State<MyOtp> {
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
-              title: Text('Error'),
-              content: Text('Failed to verify phone number'),
+              title: const Text('Error'),
+              content: const Text('Failed to verify phone number'),
               actions: <Widget>[
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: Text('OK'),
+                  child: const Text('OK'),
                 ),
               ],
             ),
@@ -98,14 +103,14 @@ class _MyOtpState extends State<MyOtp> {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text('Error'),
-            content: Text('An error occurred while verifying OTP'),
+            title: const Text('Error'),
+            content: const Text('An error occurred while verifying OTP'),
             actions: <Widget>[
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
-                child: Text('OK'),
+                child: const Text('OK'),
               ),
             ],
           ),
@@ -142,7 +147,7 @@ class _MyOtpState extends State<MyOtp> {
                 height: 10,
               ),
               const Text(
-                'We need to register your Phone before getting Started !',
+                'We need to Verify your Phone/Email before getting Started!',
                 style: TextStyle(fontSize: 16),
                 textAlign: TextAlign.center,
               ),
@@ -150,10 +155,11 @@ class _MyOtpState extends State<MyOtp> {
                 height: 30,
               ),
               Pinput(
-                length: 5,
+                length: 6,
+                controller: otpController, // Assign the controller
                 showCursor: true,
                 onChanged: (otp) {
-                  if (otp.length == 5) {
+                  if (otp.length == 6) {
                     verifyPhoneNumber(otp);
                   }
                 },
