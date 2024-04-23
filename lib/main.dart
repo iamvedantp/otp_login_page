@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:otp_login_page/home.dart';
-import 'package:otp_login_page/phone.dart';
-import 'package:otp_login_page/otp.dart';
+import 'package:otp_login_page/login_page.dart';
+// import 'package:otp_login_page/get_otp.dart';
+// import 'package:otp_login_page/login.dart';
 
 void main() {
   runApp(MaterialApp(
-    initialRoute: 'phone',
+    initialRoute: 'login',
     debugShowCheckedModeBanner: false,
     routes: {
-      'phone': (context) => const MyPhone(),
-      'verify': (context) => const MyOtp(),
-      'home' :(context) =>  const MyHome(),
+      // 'phone': (context) => const MyPhone(),
+      // 'verify': (context) => const MyOtp(),
+      'login': (context) => const LoginPage(),
+      'home': (context) => const MyHome(),
     },
   ));
 }

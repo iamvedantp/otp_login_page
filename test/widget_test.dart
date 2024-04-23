@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:otp_login_page/otp.dart';
-import 'package:otp_login_page/phone.dart';
+import 'package:otp_login_page/login.dart';
+import 'package:otp_login_page/get_otp.dart';
 import 'package:pinput/pinput.dart';
 
 void main() {
@@ -13,7 +13,8 @@ void main() {
 
     // Verify that the widgets are present.
     expect(find.text('Phone Verification'), findsOneWidget);
-    expect(find.text('We need to register your Phone before getting Started !'), findsOneWidget);
+    expect(find.text('We need to register your Phone before getting Started !'),
+        findsOneWidget);
     expect(find.byType(Pinput), findsOneWidget);
     expect(find.text('Verify Phone Number'), findsOneWidget);
   });
@@ -26,7 +27,8 @@ void main() {
 
     // Verify that the widgets are present.
     expect(find.text('Phone Verification'), findsOneWidget);
-    expect(find.text('We need to register your Phone before getting Started !'), findsOneWidget);
+    expect(find.text('We need to register your Phone before getting Started !'),
+        findsOneWidget);
     expect(find.byType(TextField), findsWidgets);
     expect(find.text('Send the code'), findsOneWidget);
   });

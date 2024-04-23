@@ -19,14 +19,14 @@ class _MyOtpState extends State<MyOtp> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('Error'),
-          content: Text('OTP cannot be empty'),
+          title: const Text('Error'),
+          content: const Text('OTP cannot be empty'),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('OK'),
+              child: const Text('OK'),
             ),
           ],
         ),
@@ -59,14 +59,14 @@ class _MyOtpState extends State<MyOtp> {
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
-                title: Text('Error'),
-                content: Text('Invalid response format from backend'),
+                title: const Text('Error'),
+                content: const Text('Invalid response format from backend'),
                 actions: <Widget>[
                   TextButton(
                     onPressed: () {
                       Navigator.of(context).pop();
                     },
-                    child: Text('OK'),
+                    child: const Text('OK'),
                   ),
                 ],
               ),
@@ -79,14 +79,14 @@ class _MyOtpState extends State<MyOtp> {
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
-              title: Text('Error'),
-              content: Text('Failed to verify phone number'),
+              title: const Text('Error'),
+              content: const Text('Failed to verify phone number'),
               actions: <Widget>[
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: Text('OK'),
+                  child: const Text('OK'),
                 ),
               ],
             ),
@@ -98,14 +98,14 @@ class _MyOtpState extends State<MyOtp> {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text('Error'),
-            content: Text('An error occurred while verifying OTP'),
+            title: const Text('Error'),
+            content: const Text('An error occurred while verifying OTP'),
             actions: <Widget>[
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
-                child: Text('OK'),
+                child: const Text('OK'),
               ),
             ],
           ),
@@ -150,10 +150,10 @@ class _MyOtpState extends State<MyOtp> {
                 height: 30,
               ),
               Pinput(
-                length: 5,
+                length: 6,
                 showCursor: true,
                 onChanged: (otp) {
-                  if (otp.length == 5) {
+                  if (otp.length == 6) {
                     verifyPhoneNumber(otp);
                   }
                 },
