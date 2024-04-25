@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:passwordfield/passwordfield.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -12,6 +13,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   TextEditingController handleController = TextEditingController();
   TextEditingController otpController = TextEditingController();
+  bool isOtpVisible = false; // Initially hide OTP field
 
   Future<void> _handleOTPRequest() async {
     final handle = handleController.text.trim();
@@ -23,7 +25,12 @@ class _LoginPageState extends State<LoginPage> {
     try {
       final response = await http.post(
         Uri.parse('http://172.17.0.1:8080/api/sessauth/otp'),
-        body: {'handle': handle},
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'handle': handle,
+        }),
       );
 
       if (response.statusCode == 200) {
@@ -32,6 +39,7 @@ class _LoginPageState extends State<LoginPage> {
             responseData.containsKey('otp')) {
           setState(() {
             otpController.text = responseData['otp'].toString();
+            isOtpVisible = true; // Show OTP field
           });
           _showSnackBar('OTP sent successfully');
         } else {
@@ -39,9 +47,7 @@ class _LoginPageState extends State<LoginPage> {
         }
       } else {
         _showError(
-            'Failed to generate OTP. Server responded with ${response.statusCode}',
-            lineNumber:
-                40); // Line number example: Update with actual line number
+            'Failed to generate OTP. Server responded with ${response.statusCode}');
       }
     } catch (error, stackTrace) {
       _showError('Error generating OTP: $error', stackTrace: stackTrace);
@@ -59,17 +65,18 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:8080/api/sessauth/login'),
-        body: {'handle': handle, 'otp': otp},
+        Uri.parse('http://172.17.0.1:8080/api/sessauth/login'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'handle': handle, 'otp': otp}),
       );
 
       if (response.statusCode == 200) {
         // Login successful, navigate to home page
         Navigator.pushReplacementNamed(context, 'home');
       } else {
-        _showError('Failed to login. Invalid credentials',
-            lineNumber:
-                66); // Line number example: Update with actual line number
+        _showError('Failed to login. Invalid credentials');
       }
     } catch (error, stackTrace) {
       _showError('Error during login: $error', stackTrace: stackTrace);
@@ -81,8 +88,8 @@ class _LoginPageState extends State<LoginPage> {
         .showSnackBar(SnackBar(content: Text(message)));
   }
 
-  void _showError(String message, {StackTrace? stackTrace, int? lineNumber}) {
-    debugPrint('Error: $message\nLine number: $lineNumber');
+  void _showError(String message, {StackTrace? stackTrace}) {
+    debugPrint('Error: $message');
     if (stackTrace != null) {
       debugPrint('Stack trace:\n$stackTrace');
     }
@@ -90,7 +97,7 @@ class _LoginPageState extends State<LoginPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Error'),
-        content: Text('$message\nLine number: $lineNumber'),
+        content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -118,30 +125,75 @@ class _LoginPageState extends State<LoginPage> {
                 decoration: InputDecoration(labelText: 'Email'),
               ),
               const SizedBox(height: 20),
-              if (otpController.text.isNotEmpty)
-                TextField(
+              if (isOtpVisible)
+                PasswordField(
                   controller: otpController,
-                  decoration: InputDecoration(labelText: 'OTP'),
+                  labelText: 'OTP',
+                  isObscured: true,
                 ),
               const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: otpController.text.isEmpty
-                    ? _handleOTPRequest
-                    : _handleLoginRequest,
-                child: Text(otpController.text.isEmpty ? 'Get OTP' : 'Login'),
+                onPressed: () {
+                  if (isOtpVisible) {
+                    _handleLoginRequest();
+                  } else {
+                    _handleOTPRequest();
+                  }
+                },
+                child: Text(isOtpVisible ? 'Login' : 'Get OTP'),
               ),
-              if (otpController.text.isNotEmpty)
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      otpController.clear();
-                    });
-                  },
-                  child: const Text('Edit Email'),
+              if (isOtpVisible)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          isOtpVisible = false; // Hide OTP field
+                          otpController.clear(); // Clear OTP
+                        });
+                      },
+                      child: const Text('Edit Email'),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        setState(() {
+                          isOtpVisible = !isOtpVisible; // Toggle OTP visibility
+                        });
+                      },
+                      icon: Icon(isOtpVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off),
+                    ),
+                  ],
                 ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// Custom widget for password field
+class PasswordField extends StatelessWidget {
+  final TextEditingController controller;
+  final String labelText;
+  final bool isObscured;
+
+  const PasswordField({
+    required this.controller,
+    required this.labelText,
+    required this.isObscured,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      obscureText: isObscured,
+      decoration: InputDecoration(
+        labelText: labelText,
       ),
     );
   }

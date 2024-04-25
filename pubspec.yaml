@@ -36,6 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.2
   pinput: ^3.0.1
   http: ^1.2.1
+  passwordfield: ^0.2.0
 
 dev_dependencies:
   flutter_test:
