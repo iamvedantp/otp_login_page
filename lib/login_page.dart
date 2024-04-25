@@ -10,17 +10,20 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  bool isOtpGenerated = false;
   TextEditingController handleController = TextEditingController();
   TextEditingController otpController = TextEditingController();
 
-  Future<void> handleOTPRequest() async {
+  Future<void> _handleOTPRequest() async {
+    final handle = handleController.text.trim();
+    if (handle.isEmpty) {
+      _showError('Please enter an email');
+      return;
+    }
+
     try {
       final response = await http.post(
         Uri.parse('http://172.17.0.1:8080/api/sessauth/otp'),
-        body: {
-          'handle': handleController.text.trim(),
-        },
+        body: {'handle': handle},
       );
 
       if (response.statusCode == 200) {
@@ -28,61 +31,81 @@ class _LoginPageState extends State<LoginPage> {
         if (responseData is Map<String, dynamic> &&
             responseData.containsKey('otp')) {
           setState(() {
-            isOtpGenerated = true;
-            otpController.text = responseData['otp'].toString(); // Autofill OTP
+            otpController.text = responseData['otp'].toString();
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('OTP sent successfully')),
-          );
+          _showSnackBar('OTP sent successfully');
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Invalid response from server')),
-          );
+          _showError('Invalid OTP response from server');
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to generate OTP')),
-        );
+        _showError(
+            'Failed to generate OTP. Server responded with ${response.statusCode}',
+            lineNumber:
+                40); // Line number example: Update with actual line number
       }
-    } catch (error) {
-      print('Error generating OTP: $error');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('An error occurred')),
-      );
+    } catch (error, stackTrace) {
+      _showError('Error generating OTP: $error', stackTrace: stackTrace);
     }
   }
 
-  Future<void> handleLoginRequest() async {
+  Future<void> _handleLoginRequest() async {
+    final handle = handleController.text.trim();
+    final otp = otpController.text.trim();
+
+    if (handle.isEmpty || otp.isEmpty) {
+      _showError('Please enter email and OTP');
+      return;
+    }
+
     try {
       final response = await http.post(
         Uri.parse('http://localhost:8080/api/sessauth/login'),
-        body: {
-          "handle": handleController.text.trim(),
-          "otp": otpController.text.trim(),
-        },
+        body: {'handle': handle, 'otp': otp},
       );
 
       if (response.statusCode == 200) {
         // Login successful, navigate to home page
         Navigator.pushReplacementNamed(context, 'home');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to login')),
-        );
+        _showError('Failed to login. Invalid credentials',
+            lineNumber:
+                66); // Line number example: Update with actual line number
       }
-    } catch (error) {
-      print('Error during login: $error');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('An error occurred')),
-      );
+    } catch (error, stackTrace) {
+      _showError('Error during login: $error', stackTrace: stackTrace);
     }
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _showError(String message, {StackTrace? stackTrace, int? lineNumber}) {
+    debugPrint('Error: $message\nLine number: $lineNumber');
+    if (stackTrace != null) {
+      debugPrint('Stack trace:\n$stackTrace');
+    }
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Error'),
+        content: Text('$message\nLine number: $lineNumber'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Login'),
+        title: const Text('Login'),
       ),
       body: Center(
         child: Padding(
@@ -94,23 +117,24 @@ class _LoginPageState extends State<LoginPage> {
                 controller: handleController,
                 decoration: InputDecoration(labelText: 'Email'),
               ),
-              SizedBox(height: 20),
-              if (isOtpGenerated)
+              const SizedBox(height: 20),
+              if (otpController.text.isNotEmpty)
                 TextField(
                   controller: otpController,
-                  decoration: const InputDecoration(labelText: 'OTP'),
+                  decoration: InputDecoration(labelText: 'OTP'),
                 ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               ElevatedButton(
-                onPressed:
-                    isOtpGenerated ? handleLoginRequest : handleOTPRequest,
-                child: Text(isOtpGenerated ? 'Login' : 'Get OTP'),
+                onPressed: otpController.text.isEmpty
+                    ? _handleOTPRequest
+                    : _handleLoginRequest,
+                child: Text(otpController.text.isEmpty ? 'Get OTP' : 'Login'),
               ),
-              if (isOtpGenerated)
+              if (otpController.text.isNotEmpty)
                 TextButton(
                   onPressed: () {
                     setState(() {
-                      isOtpGenerated = false;
+                      otpController.clear();
                     });
                   },
                   child: const Text('Edit Email'),
