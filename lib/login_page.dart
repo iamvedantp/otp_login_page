@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:passwordfield/passwordfield.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -14,6 +13,8 @@ class _LoginPageState extends State<LoginPage> {
   TextEditingController handleController = TextEditingController();
   TextEditingController otpController = TextEditingController();
   bool isOtpVisible = false; // Initially hide OTP field
+  bool isOtpObscured = true; // Initially obscure OTP field
+  Map<String, dynamic>? userData; // User data collected from the backend
 
   Future<void> _handleOTPRequest() async {
     final handle = handleController.text.trim();
@@ -43,8 +44,10 @@ class _LoginPageState extends State<LoginPage> {
           });
           _showSnackBar('OTP sent successfully');
         } else {
-          _showError('Invalid OTP response from server');
+          _showError('No user found');
         }
+      } else if (response.statusCode == 404) {
+        _showError('No user found');
       } else {
         _showError(
             'Failed to generate OTP. Server responded with ${response.statusCode}');
@@ -73,8 +76,14 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData is Map<String, dynamic>) {
+          setState(() {
+            userData = responseData; // Save user data
+          });
+        }
         // Login successful, navigate to home page
-        Navigator.pushReplacementNamed(context, 'home');
+        Navigator.pushReplacementNamed(context, 'home', arguments: userData);
       } else {
         _showError('Failed to login. Invalid credentials');
       }
@@ -129,7 +138,12 @@ class _LoginPageState extends State<LoginPage> {
                 PasswordField(
                   controller: otpController,
                   labelText: 'OTP',
-                  isObscured: true,
+                  isObscured: isOtpObscured,
+                  toggleVisibility: () {
+                    setState(() {
+                      isOtpObscured = !isOtpObscured;
+                    });
+                  },
                 ),
               const SizedBox(height: 20),
               ElevatedButton(
@@ -140,32 +154,17 @@ class _LoginPageState extends State<LoginPage> {
                     _handleOTPRequest();
                   }
                 },
-                child: Text(isOtpVisible ? 'Login' : 'Get OTP'),
+                child: Text(isOtpVisible ? 'Login' : 'Request OTP'),
               ),
               if (isOtpVisible)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          isOtpVisible = false; // Hide OTP field
-                          otpController.clear(); // Clear OTP
-                        });
-                      },
-                      child: const Text('Edit Email'),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        setState(() {
-                          isOtpVisible = !isOtpVisible; // Toggle OTP visibility
-                        });
-                      },
-                      icon: Icon(isOtpVisible
-                          ? Icons.visibility
-                          : Icons.visibility_off),
-                    ),
-                  ],
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      isOtpVisible = false; // Hide OTP field
+                      otpController.clear(); // Clear OTP
+                    });
+                  },
+                  child: const Text('Edit Email'),
                 ),
             ],
           ),
@@ -180,11 +179,13 @@ class PasswordField extends StatelessWidget {
   final TextEditingController controller;
   final String labelText;
   final bool isObscured;
+  final VoidCallback toggleVisibility;
 
   const PasswordField({
     required this.controller,
     required this.labelText,
     required this.isObscured,
+    required this.toggleVisibility,
   });
 
   @override
@@ -194,6 +195,12 @@ class PasswordField extends StatelessWidget {
       obscureText: isObscured,
       decoration: InputDecoration(
         labelText: labelText,
+        suffixIcon: IconButton(
+          onPressed: toggleVisibility,
+          icon: Icon(
+            isObscured ? Icons.visibility_off : Icons.visibility,
+          ),
+        ),
       ),
     );
   }
