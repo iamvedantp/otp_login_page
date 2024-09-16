@@ -1,9 +1,9 @@
 # OTP Login Page
 
 This is a Flutter project that demonstrates a login flow using One-Time Password (OTP) authentication.
-![Screenshot_1714132792](https://github.com/iamvedantp/otp_login_page/assets/128803902/6a5fa9f3-25c2-4232-ad32-9374d423166f)
-![Screenshot_1714132828](https://github.com/iamvedantp/otp_login_page/assets/128803902/43695bee-b44f-4b63-9068-0db01d042d93)
-![Screenshot_1714132836](https://github.com/iamvedantp/otp_login_page/assets/128803902/ddd24efc-28b8-4734-9b52-25a0ca64df73)
+
+![otp2-imageonline co-merged](https://github.com/user-attachments/assets/a59f14fb-9546-46d3-b677-caa87a6f754a)
+
 
 
 ## Features
