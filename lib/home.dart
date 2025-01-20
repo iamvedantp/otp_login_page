@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:otp_login_page/login_page.dart';
 
 class MyHome extends StatefulWidget {
   const MyHome({Key? key}) : super(key: key);
@@ -31,7 +30,7 @@ class MyHomeState extends State<MyHome> {
         title: const Text('Welcome'),
         actions: [
           IconButton(
-            icon: Icon(Icons.logout),
+            icon: const Icon(Icons.logout),
             onPressed: _logout,
           ),
         ],
