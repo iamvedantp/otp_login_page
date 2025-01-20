@@ -6,16 +6,18 @@ class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
 
   @override
-  _LoginPageState createState() => _LoginPageState();
+  LoginPageState createState() => LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
-  TextEditingController handleController = TextEditingController();
-  TextEditingController otpController = TextEditingController();
+class LoginPageState extends State<LoginPage> {
+  // State variables
+  final TextEditingController handleController = TextEditingController();
+  final TextEditingController otpController = TextEditingController();
   bool isOtpVisible = false; // Initially hide OTP field
   bool isOtpObscured = true; // Initially obscure OTP field
-  Map<String, dynamic>? userData; // User data collected from the backend
+  Map<String, dynamic>? userData;
 
+  // Request OTP
   Future<void> _handleOTPRequest() async {
     final handle = handleController.text.trim();
     if (handle.isEmpty) {
@@ -26,13 +28,11 @@ class _LoginPageState extends State<LoginPage> {
     try {
       final response = await http.post(
         Uri.parse('http://172.17.0.1:8080/api/sessauth/otp'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'handle': handle,
-        }),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'handle': handle}),
       );
+
+      if (!mounted) return; // Ensure widget is still in the tree
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
@@ -49,14 +49,14 @@ class _LoginPageState extends State<LoginPage> {
       } else if (response.statusCode == 404) {
         _showError('No user found');
       } else {
-        _showError(
-            'Failed to generate OTP. Server responded with ${response.statusCode}');
+        _showError('Failed to generate OTP. Status: ${response.statusCode}');
       }
-    } catch (error, stackTrace) {
-      _showError('Error generating OTP: $error', stackTrace: stackTrace);
+    } catch (error) {
+      _showError('Error generating OTP: $error');
     }
   }
 
+  // Handle Login
   Future<void> _handleLoginRequest() async {
     final handle = handleController.text.trim();
     final otp = otpController.text.trim();
@@ -69,11 +69,11 @@ class _LoginPageState extends State<LoginPage> {
     try {
       final response = await http.post(
         Uri.parse('http://172.17.0.1:8080/api/sessauth/login'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'handle': handle, 'otp': otp}),
       );
+
+      if (!mounted) return; // Ensure widget is still in the tree
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
@@ -82,35 +82,34 @@ class _LoginPageState extends State<LoginPage> {
             userData = responseData; // Save user data
           });
         }
-        // Login successful, navigate to home page
         Navigator.pushReplacementNamed(context, 'home', arguments: userData);
       } else {
         _showError('Failed to login. Invalid credentials');
       }
-    } catch (error, stackTrace) {
-      _showError('Error during login: $error', stackTrace: stackTrace);
+    } catch (error) {
+      _showError('Error during login: $error');
     }
   }
 
+  // Snackbar Helper
   void _showSnackBar(String message) {
+    if (!mounted) return; // Ensure widget is still in the tree
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(message)));
   }
 
-  void _showError(String message, {StackTrace? stackTrace}) {
-    debugPrint('Error: $message');
-    if (stackTrace != null) {
-      debugPrint('Stack trace:\n$stackTrace');
-    }
+  // Error Dialog Helper
+  void _showError(String message) {
+    if (!mounted) return; // Ensure widget is still in the tree
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Error'),
+        title: const Text('Error'),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('OK'),
+            child: const Text('OK'),
           ),
         ],
       ),
@@ -120,9 +119,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Login'),
-      ),
+      appBar: AppBar(title: const Text('Login')),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
@@ -131,19 +128,26 @@ class _LoginPageState extends State<LoginPage> {
             children: [
               TextField(
                 controller: handleController,
-                decoration: InputDecoration(labelText: 'Email'),
+                decoration: const InputDecoration(labelText: 'Email'),
               ),
               const SizedBox(height: 20),
               if (isOtpVisible)
-                PasswordField(
+                TextField(
                   controller: otpController,
-                  labelText: 'OTP',
-                  isObscured: isOtpObscured,
-                  toggleVisibility: () {
-                    setState(() {
-                      isOtpObscured = !isOtpObscured;
-                    });
-                  },
+                  obscureText: isOtpObscured,
+                  decoration: InputDecoration(
+                    labelText: 'OTP',
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        isOtpObscured ? Icons.visibility_off : Icons.visibility,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          isOtpObscured = !isOtpObscured;
+                        });
+                      },
+                    ),
+                  ),
                 ),
               const SizedBox(height: 20),
               ElevatedButton(
@@ -160,45 +164,13 @@ class _LoginPageState extends State<LoginPage> {
                 TextButton(
                   onPressed: () {
                     setState(() {
-                      isOtpVisible = false; // Hide OTP field
-                      otpController.clear(); // Clear OTP
+                      isOtpVisible = false;
+                      otpController.clear();
                     });
                   },
                   child: const Text('Edit Email'),
                 ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Custom widget for password field
-class PasswordField extends StatelessWidget {
-  final TextEditingController controller;
-  final String labelText;
-  final bool isObscured;
-  final VoidCallback toggleVisibility;
-
-  const PasswordField({
-    required this.controller,
-    required this.labelText,
-    required this.isObscured,
-    required this.toggleVisibility,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      obscureText: isObscured,
-      decoration: InputDecoration(
-        labelText: labelText,
-        suffixIcon: IconButton(
-          onPressed: toggleVisibility,
-          icon: Icon(
-            isObscured ? Icons.visibility_off : Icons.visibility,
           ),
         ),
       ),
